@@ -1,0 +1,34 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      production-dependencies:
+        dependency-type: production
+      development-dependencies:
+        dependency-type: development
+    reviewers:
+      - MadBiceps
+
+  - package-ecosystem: docker
+    directory: /apps/speed-tracker
+    schedule:
+      interval: weekly
+    reviewers:
+      - MadBiceps
+
+  - package-ecosystem: docker
+    directory: /apps/reporter
+    schedule:
+      interval: weekly
+    reviewers:
+      - MadBiceps
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    reviewers:
+      - MadBiceps
