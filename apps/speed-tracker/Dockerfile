@@ -17,10 +17,11 @@ RUN pnpm turbo run build --filter=@internet-speed-watcher/speed-tracker...
 
 FROM node:25-slim AS runner
 
-# Install build tools for native modules (lzma-native required by speedtest-net)
+# Install build tools for native modules (lzma-native) and runtime deps (procps for speedtest-net)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     python3 \
+    procps \
     && rm -rf /var/lib/apt/lists/*
 
 RUN npm install -g pnpm@9.15.0
