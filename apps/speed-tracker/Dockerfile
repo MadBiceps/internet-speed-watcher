@@ -17,6 +17,12 @@ RUN pnpm turbo run build --filter=@internet-speed-watcher/speed-tracker...
 
 FROM node:25-slim AS runner
 
+# Install build tools for native modules (lzma-native required by speedtest-net)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    python3 \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN npm install -g pnpm@9.15.0
 
 WORKDIR /app
@@ -25,7 +31,7 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml .npmrc ./
 COPY packages/shared/package.json packages/shared/
 COPY apps/speed-tracker/package.json apps/speed-tracker/
 
-RUN pnpm install --frozen-lockfile --prod
+RUN pnpm install --frozen-lockfile --prod && pnpm rebuild lzma-native
 
 COPY --from=builder /app/packages/shared/dist packages/shared/dist
 COPY --from=builder /app/apps/speed-tracker/dist apps/speed-tracker/dist
