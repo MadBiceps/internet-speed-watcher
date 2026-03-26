@@ -1,6 +1,6 @@
 FROM node:25-slim AS builder
 
-RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+RUN npm install -g pnpm@9.15.0
 
 WORKDIR /app
 
@@ -17,7 +17,7 @@ RUN pnpm turbo run build --filter=@internet-speed-watcher/speed-tracker...
 
 FROM node:25-slim AS runner
 
-RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+RUN npm install -g pnpm@9.15.0
 
 WORKDIR /app
 
