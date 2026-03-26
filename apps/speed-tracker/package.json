@@ -1,0 +1,24 @@
+{
+  "name": "@internet-speed-watcher/speed-tracker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "node --watch dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist .turbo",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@internet-speed-watcher/shared": "workspace:*",
+    "node-cron": "^3.0.3",
+    "speedtest-net": "^2.2.0"
+  },
+  "devDependencies": {
+    "@types/node-cron": "^3.0.11",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
+  }
+}
