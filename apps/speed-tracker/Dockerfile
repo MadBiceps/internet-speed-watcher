@@ -43,6 +43,9 @@ RUN pnpm install --no-frozen-lockfile --prod
 COPY --from=builder /app/packages/shared/dist packages/shared/dist
 COPY --from=builder /app/apps/speed-tracker/dist apps/speed-tracker/dist
 
+# speedtest-net downloads the Ookla CLI binary on first run
+RUN chown -R node:node /app/node_modules/.pnpm/speedtest-net@*/node_modules/speedtest-net/
+
 USER node
 
 CMD ["node", "apps/speed-tracker/dist/index.js"]
