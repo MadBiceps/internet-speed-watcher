@@ -31,7 +31,14 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml .npmrc ./
 COPY packages/shared/package.json packages/shared/
 COPY apps/speed-tracker/package.json apps/speed-tracker/
 
-RUN pnpm install --frozen-lockfile --prod && pnpm rebuild lzma-native
+# Remove lzma-native from neverBuiltDependencies so it compiles during install
+RUN node -e " \
+  const fs = require('fs'); \
+  const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8')); \
+  pkg.pnpm.neverBuiltDependencies = (pkg.pnpm.neverBuiltDependencies || []).filter(d => d !== 'lzma-native'); \
+  fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');"
+
+RUN pnpm install --no-frozen-lockfile --prod
 
 COPY --from=builder /app/packages/shared/dist packages/shared/dist
 COPY --from=builder /app/apps/speed-tracker/dist apps/speed-tracker/dist
