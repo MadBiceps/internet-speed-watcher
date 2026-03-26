@@ -1,0 +1,30 @@
+{
+  "name": "@internet-speed-watcher/reporter",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "node --watch dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist .turbo",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@influxdata/influxdb-client": "^1.35.0",
+    "@internet-speed-watcher/shared": "workspace:*",
+    "chart.js": "^4.4.0",
+    "chartjs-node-canvas": "^4.1.6",
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.9.0",
+    "pdfkit": "^0.15.0"
+  },
+  "devDependencies": {
+    "@types/node-cron": "^3.0.11",
+    "@types/nodemailer": "^6.4.17",
+    "@types/pdfkit": "^0.13.8",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
+  }
+}
