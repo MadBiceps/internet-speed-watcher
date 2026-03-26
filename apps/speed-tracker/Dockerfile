@@ -1,4 +1,4 @@
-FROM node:22-slim AS builder
+FROM node:25-slim AS builder
 
 RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 
@@ -15,7 +15,7 @@ COPY apps/speed-tracker/ apps/speed-tracker/
 
 RUN pnpm turbo run build --filter=@internet-speed-watcher/speed-tracker...
 
-FROM node:22-slim AS runner
+FROM node:25-slim AS runner
 
 RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 
