@@ -1,0 +1,169 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "Current Download",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Mbps",
+          "thresholds": {
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 50 },
+              { "color": "green", "value": 100 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "influxdb", "uid": "" },
+          "query": "from(bucket: \"speedtest\")\n  |> range(start: -1h)\n  |> filter(fn: (r) => r._measurement == \"speedtest\" and r._field == \"download_mbps\")\n  |> last()",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Current Upload",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Mbps",
+          "thresholds": {
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 10 },
+              { "color": "green", "value": 20 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "influxdb", "uid": "" },
+          "query": "from(bucket: \"speedtest\")\n  |> range(start: -1h)\n  |> filter(fn: (r) => r._measurement == \"speedtest\" and r._field == \"upload_mbps\")\n  |> last()",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Current Ping",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 30 },
+              { "color": "red", "value": 100 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "influxdb", "uid": "" },
+          "query": "from(bucket: \"speedtest\")\n  |> range(start: -1h)\n  |> filter(fn: (r) => r._measurement == \"speedtest\" and r._field == \"ping_ms\")\n  |> last()",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Packet Loss",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 5 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "influxdb", "uid": "" },
+          "query": "from(bucket: \"speedtest\")\n  |> range(start: -1h)\n  |> filter(fn: (r) => r._measurement == \"speedtest\" and r._field == \"packet_loss\")\n  |> last()",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Download Speed",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 4 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Mbps",
+          "custom": { "lineWidth": 1, "fillOpacity": 10 }
+        }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "influxdb", "uid": "" },
+          "query": "from(bucket: \"speedtest\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"speedtest\" and r._field == \"download_mbps\")",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Upload Speed",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 12 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Mbps",
+          "custom": { "lineWidth": 1, "fillOpacity": 10 }
+        }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "influxdb", "uid": "" },
+          "query": "from(bucket: \"speedtest\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"speedtest\" and r._field == \"upload_mbps\")",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Ping",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 20 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": { "lineWidth": 1, "fillOpacity": 10 }
+        }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "influxdb", "uid": "" },
+          "query": "from(bucket: \"speedtest\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"speedtest\" and r._field == \"ping_ms\")",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["speedtest"],
+  "templating": { "list": [] },
+  "time": { "from": "now-24h", "to": "now" },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Internet Speed Test",
+  "uid": "internet-speed-test",
+  "version": 1
+}
