@@ -1,6 +1,6 @@
 FROM node:25-slim AS builder
 
-RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+RUN npm install -g pnpm@9.15.0
 
 WORKDIR /app
 
@@ -29,7 +29,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+RUN npm install -g pnpm@9.15.0
 
 WORKDIR /app
 
