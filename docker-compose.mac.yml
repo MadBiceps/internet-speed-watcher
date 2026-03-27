@@ -1,0 +1,163 @@
+# Docker Compose for macOS (Intel & Apple Silicon) — standalone, no repo clone needed!
+#
+# Usage:
+#   1. Copy this file + .env to your Mac
+#   2. Adjust .env values
+#   3. docker compose -f docker-compose.mac.yml up -d
+#
+# Requirements:
+#   - Docker Desktop for Mac
+#
+# Note: network_mode: host is not supported on macOS Docker Desktop,
+# so speed-tracker uses bridge networking. Speed test results may be
+# slightly lower than native due to Docker's VM-based networking on macOS.
+
+services:
+  influxdb:
+    image: influxdb:2.7
+    ports:
+      - "8086:8086"
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=${DOCKER_INFLUXDB_INIT_MODE:-setup}
+      - DOCKER_INFLUXDB_INIT_USERNAME=${DOCKER_INFLUXDB_INIT_USERNAME:-admin}
+      - DOCKER_INFLUXDB_INIT_PASSWORD=${DOCKER_INFLUXDB_INIT_PASSWORD:-my-super-secret-password}
+      - DOCKER_INFLUXDB_INIT_ORG=${DOCKER_INFLUXDB_INIT_ORG:-my-org}
+      - DOCKER_INFLUXDB_INIT_BUCKET=${DOCKER_INFLUXDB_INIT_BUCKET:-speedtest}
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${DOCKER_INFLUXDB_INIT_ADMIN_TOKEN:-my-super-secret-token}
+    volumes:
+      - influxdb-data:/var/lib/influxdb2
+    healthcheck:
+      test: ["CMD", "influx", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - monitoring
+
+  # Init container that writes Grafana provisioning files into a shared volume.
+  # This avoids needing to clone the repo just for the config files.
+  grafana-provisioning-init:
+    image: busybox:latest
+    restart: "no"
+    environment:
+      - INFLUXDB_URL=http://influxdb:8086
+      - INFLUXDB_TOKEN=${INFLUXDB_TOKEN:-my-super-secret-token}
+      - INFLUXDB_ORG=${INFLUXDB_ORG:-my-org}
+      - INFLUXDB_BUCKET=${INFLUXDB_BUCKET:-speedtest}
+    volumes:
+      - grafana-provisioning:/provisioning
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        mkdir -p /provisioning/datasources /provisioning/dashboards/json
+
+        cat > /provisioning/datasources/influxdb.yml << DATASOURCE
+        apiVersion: 1
+        datasources:
+          - name: InfluxDB
+            type: influxdb
+            access: proxy
+            url: $INFLUXDB_URL
+            jsonData:
+              version: Flux
+              organization: $INFLUXDB_ORG
+              defaultBucket: $INFLUXDB_BUCKET
+            secureJsonData:
+              token: $INFLUXDB_TOKEN
+            isDefault: true
+            editable: true
+        DATASOURCE
+
+        cat > /provisioning/dashboards/dashboard.yml << 'DASHBOARD_PROV'
+        apiVersion: 1
+        providers:
+          - name: default
+            orgId: 1
+            folder: ""
+            type: file
+            disableDeletion: false
+            editable: true
+            options:
+              path: /etc/grafana/provisioning/dashboards/json
+              foldersFromFilesStructure: false
+        DASHBOARD_PROV
+
+        cat > /provisioning/dashboards/json/speed-test.json << 'DASHBOARD_JSON'
+        {"annotations":{"list":[]},"editable":true,"fiscalYearStartMonth":0,"graphTooltip":1,"id":null,"links":[],"panels":[{"title":"Current Download","type":"stat","gridPos":{"h":4,"w":4,"x":0,"y":0},"fieldConfig":{"defaults":{"unit":"Mbps","thresholds":{"steps":[{"color":"red","value":null},{"color":"yellow","value":50},{"color":"green","value":100}]}}},"targets":[{"datasource":{"type":"influxdb","uid":""},"query":"from(bucket: \"speedtest\")\n  |> range(start: -1h)\n  |> filter(fn: (r) => r._measurement == \"speedtest\" and r._field == \"download_mbps\")\n  |> last()","refId":"A"}]},{"title":"Current Upload","type":"stat","gridPos":{"h":4,"w":4,"x":4,"y":0},"fieldConfig":{"defaults":{"unit":"Mbps","thresholds":{"steps":[{"color":"red","value":null},{"color":"yellow","value":10},{"color":"green","value":20}]}}},"targets":[{"datasource":{"type":"influxdb","uid":""},"query":"from(bucket: \"speedtest\")\n  |> range(start: -1h)\n  |> filter(fn: (r) => r._measurement == \"speedtest\" and r._field == \"upload_mbps\")\n  |> last()","refId":"A"}]},{"title":"Current Ping","type":"stat","gridPos":{"h":4,"w":4,"x":8,"y":0},"fieldConfig":{"defaults":{"unit":"ms","thresholds":{"steps":[{"color":"green","value":null},{"color":"yellow","value":30},{"color":"red","value":100}]}}},"targets":[{"datasource":{"type":"influxdb","uid":""},"query":"from(bucket: \"speedtest\")\n  |> range(start: -1h)\n  |> filter(fn: (r) => r._measurement == \"speedtest\" and r._field == \"ping_ms\")\n  |> last()","refId":"A"}]},{"title":"Packet Loss","type":"stat","gridPos":{"h":4,"w":4,"x":12,"y":0},"fieldConfig":{"defaults":{"unit":"percent","thresholds":{"steps":[{"color":"green","value":null},{"color":"yellow","value":1},{"color":"red","value":5}]}}},"targets":[{"datasource":{"type":"influxdb","uid":""},"query":"from(bucket: \"speedtest\")\n  |> range(start: -1h)\n  |> filter(fn: (r) => r._measurement == \"speedtest\" and r._field == \"packet_loss\")\n  |> last()","refId":"A"}]},{"title":"Download Speed","type":"timeseries","gridPos":{"h":8,"w":24,"x":0,"y":4},"fieldConfig":{"defaults":{"unit":"Mbps","custom":{"lineWidth":1,"fillOpacity":10}}},"targets":[{"datasource":{"type":"influxdb","uid":""},"query":"from(bucket: \"speedtest\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"speedtest\" and r._field == \"download_mbps\")","refId":"A"}]},{"title":"Upload Speed","type":"timeseries","gridPos":{"h":8,"w":24,"x":0,"y":12},"fieldConfig":{"defaults":{"unit":"Mbps","custom":{"lineWidth":1,"fillOpacity":10}}},"targets":[{"datasource":{"type":"influxdb","uid":""},"query":"from(bucket: \"speedtest\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"speedtest\" and r._field == \"upload_mbps\")","refId":"A"}]},{"title":"Ping","type":"timeseries","gridPos":{"h":8,"w":24,"x":0,"y":20},"fieldConfig":{"defaults":{"unit":"ms","custom":{"lineWidth":1,"fillOpacity":10}}},"targets":[{"datasource":{"type":"influxdb","uid":""},"query":"from(bucket: \"speedtest\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"speedtest\" and r._field == \"ping_ms\")","refId":"A"}]}],"schemaVersion":39,"tags":["speedtest"],"templating":{"list":[]},"time":{"from":"now-24h","to":"now"},"timepicker":{},"timezone":"","title":"Internet Speed Test","uid":"internet-speed-test","version":1}
+        DASHBOARD_JSON
+
+        echo "Grafana provisioning files written successfully."
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD:-admin}
+      - GF_SERVER_ENABLE_GZIP=true
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - grafana-provisioning:/etc/grafana/provisioning
+    depends_on:
+      influxdb:
+        condition: service_healthy
+      grafana-provisioning-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    networks:
+      - monitoring
+
+  speed-tracker:
+    image: ghcr.io/madbiceps/internet-speed-watcher-speed-tracker:${IMAGE_TAG:-dev}
+    environment:
+      - INFLUXDB_URL=http://influxdb:8086
+      - INFLUXDB_TOKEN=${INFLUXDB_TOKEN:-my-super-secret-token}
+      - INFLUXDB_ORG=${INFLUXDB_ORG:-my-org}
+      - INFLUXDB_BUCKET=${INFLUXDB_BUCKET:-speedtest}
+    depends_on:
+      influxdb:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - monitoring
+
+  reporter:
+    image: ghcr.io/madbiceps/internet-speed-watcher-reporter:${IMAGE_TAG:-dev}
+    environment:
+      - INFLUXDB_URL=http://influxdb:8086
+      - INFLUXDB_TOKEN=${INFLUXDB_TOKEN:-my-super-secret-token}
+      - INFLUXDB_ORG=${INFLUXDB_ORG:-my-org}
+      - INFLUXDB_BUCKET=${INFLUXDB_BUCKET:-speedtest}
+      - SLA_EXPECTED_DOWNLOAD_MBPS=${SLA_EXPECTED_DOWNLOAD_MBPS:-100}
+      - SLA_EXPECTED_UPLOAD_MBPS=${SLA_EXPECTED_UPLOAD_MBPS:-20}
+      - SLA_MIN_DOWNLOAD_MBPS=${SLA_MIN_DOWNLOAD_MBPS:-50}
+      - SLA_MAX_DOWNLOAD_MBPS=${SLA_MAX_DOWNLOAD_MBPS:-1000}
+      - SLA_MIN_UPLOAD_MBPS=${SLA_MIN_UPLOAD_MBPS:-10}
+      - SLA_MAX_UPLOAD_MBPS=${SLA_MAX_UPLOAD_MBPS:-500}
+      - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_SECURE=${SMTP_SECURE:-false}
+      - SMTP_USER=${SMTP_USER:-your-email@gmail.com}
+      - SMTP_PASS=${SMTP_PASS:-your-gmail-app-password}
+      - SMTP_FROM=${SMTP_FROM:-your-email@gmail.com}
+      - SMTP_TO=${SMTP_TO:-recipient@example.com}
+      - RUN_IMMEDIATELY=${RUN_IMMEDIATELY:-false}
+    depends_on:
+      influxdb:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - monitoring
+
+volumes:
+  influxdb-data:
+  grafana-data:
+  grafana-provisioning:
+
+networks:
+  monitoring:
+    driver: bridge
