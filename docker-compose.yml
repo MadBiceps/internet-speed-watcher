@@ -41,8 +41,9 @@ services:
     build:
       context: .
       dockerfile: apps/speed-tracker/Dockerfile
+    network_mode: host
     environment:
-      - INFLUXDB_URL=http://influxdb:8086
+      - INFLUXDB_URL=http://localhost:8086
       - INFLUXDB_TOKEN=${INFLUXDB_TOKEN:-my-super-secret-token}
       - INFLUXDB_ORG=${INFLUXDB_ORG:-my-org}
       - INFLUXDB_BUCKET=${INFLUXDB_BUCKET:-speedtest}
@@ -50,8 +51,6 @@ services:
       influxdb:
         condition: service_healthy
     restart: unless-stopped
-    networks:
-      - monitoring
 
   reporter:
     build:
