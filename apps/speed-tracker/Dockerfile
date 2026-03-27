@@ -19,7 +19,7 @@ FROM node:25-slim AS runner
 
 # Install official Ookla speedtest CLI binary
 ARG TARGETARCH
-RUN apt-get update && apt-get install -y --no-install-recommends curl \
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
     && case "${TARGETARCH}" in arm64) ARCH=aarch64 ;; *) ARCH=x86_64 ;; esac \
     && curl -sLo /tmp/speedtest.tgz "https://install.speedtest.net/app/cli/ookla-speedtest-1.2.0-linux-${ARCH}.tgz" \
     && tar -xzf /tmp/speedtest.tgz -C /usr/local/bin speedtest \
