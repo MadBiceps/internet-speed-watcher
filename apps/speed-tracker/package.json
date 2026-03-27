@@ -13,8 +13,7 @@
   },
   "dependencies": {
     "@internet-speed-watcher/shared": "workspace:*",
-    "node-cron": "^4.2.1",
-    "speedtest-net": "^2.2.0"
+    "node-cron": "^4.2.1"
   },
   "devDependencies": {
     "@types/node": "^25.5.0",

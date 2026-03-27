@@ -1,5 +1,6 @@
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import cron from "node-cron";
-import speedTest from "speedtest-net";
 import {
   loadInfluxConfig,
   createInfluxClient,
@@ -9,18 +10,32 @@ import {
   type SpeedTestMeasurement,
 } from "@internet-speed-watcher/shared";
 
+const execFileAsync = promisify(execFile);
+
 const config = loadInfluxConfig();
 const client = createInfluxClient(config);
 const writeApi = createWriteApi(client, config);
+
+interface SpeedTestResult {
+  ping: { jitter: number; latency: number };
+  download: { bandwidth: number };
+  upload: { bandwidth: number };
+  packetLoss?: number;
+  server: { name: string; location: string };
+  isp: string;
+}
 
 async function runSpeedTest(): Promise<void> {
   console.log(`[${new Date().toISOString()}] Starting speed test...`);
 
   try {
-    const result = await speedTest({
-      acceptLicense: true,
-      acceptGdpr: true,
-    });
+    const { stdout } = await execFileAsync("speedtest", [
+      "--format=json",
+      "--accept-license",
+      "--accept-gdpr",
+    ]);
+
+    const result: SpeedTestResult = JSON.parse(stdout);
 
     const measurement: SpeedTestMeasurement = {
       downloadMbps: bytesPerSecToMbps(result.download.bandwidth),
