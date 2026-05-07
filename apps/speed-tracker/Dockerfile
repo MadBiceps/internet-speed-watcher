@@ -1,4 +1,4 @@
-FROM node:25-slim AS builder
+FROM node:26-slim AS builder
 
 RUN npm install -g pnpm@9.15.0
 
@@ -15,7 +15,7 @@ COPY apps/speed-tracker/ apps/speed-tracker/
 
 RUN pnpm turbo run build --filter=@internet-speed-watcher/speed-tracker...
 
-FROM node:25-slim AS runner
+FROM node:26-slim AS runner
 
 # Install official Ookla speedtest CLI binary
 ARG TARGETARCH
