@@ -1,4 +1,4 @@
-FROM node:25-slim AS builder
+FROM node:26-slim AS builder
 
 RUN npm install -g pnpm@9.15.0
 
@@ -15,7 +15,7 @@ COPY apps/reporter/ apps/reporter/
 
 RUN pnpm turbo run build --filter=@internet-speed-watcher/reporter...
 
-FROM node:25-slim AS runner
+FROM node:26-slim AS runner
 
 # Install native canvas dependencies required by chartjs-node-canvas
 RUN apt-get update && apt-get install -y --no-install-recommends \
