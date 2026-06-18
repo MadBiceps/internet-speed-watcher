@@ -16,9 +16,9 @@
     "@internet-speed-watcher/shared": "workspace:*",
     "chart.js": "^4.4.0",
     "chartjs-node-canvas": "^5.0.0",
-    "node-cron": "^4.2.1",
-    "nodemailer": "^8.0.4",
-    "pdfkit": "^0.18.0"
+    "node-cron": "^4.4.1",
+    "nodemailer": "^9.0.1",
+    "pdfkit": "^0.19.1"
   },
   "devDependencies": {
     "@types/node": "^25.5.0",
